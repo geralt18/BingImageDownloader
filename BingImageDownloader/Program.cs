@@ -52,38 +52,52 @@ namespace BingImageDownloader
                 _logger.Info("Loading image list for {0}", market);
                 if (otherMarket)
                 {
-                    var req = (HttpWebRequest)WebRequest.Create(GetUrl(0, 8, market));
-                    var res = (HttpWebResponse)req.GetResponse();
-                    var json = new StreamReader(res.GetResponseStream()).ReadToEnd();
-                    var b = JsonConvert.DeserializeObject<Bing>(json);
-                    b.images.ForEach(x => x.market = market);
-                    images.AddRange(b.images);
+                    images.AddRange(GetImagesList(0, 8, market));
 
                     if (missing)
-                    {
-                        req = (HttpWebRequest)WebRequest.Create(GetUrl(7, 8, market));
-                        res = (HttpWebResponse)req.GetResponse();
-                        json = new StreamReader(res.GetResponseStream()).ReadToEnd();
-                        b = JsonConvert.DeserializeObject<Bing>(json);
-                        b.images.ForEach(x => x.market = market);
-                        images.AddRange(b.images);
-                    }
+                        images.AddRange(GetImagesList(7, 8, market));
                 }
             }
-
 
             foreach (var i in images)
             {
                 string url = string.Format("{0}{1}_{2}.jpg", _bingUrl, i.urlbase, GetSize());
-                if (!_archivedImages.Exists(x => x.Name.Equals(i.GetImageName(), StringComparison.InvariantCultureIgnoreCase)))
+                if (!_archivedImages.ContainsKey(i.GetImageName()))
                 {
-                    DownloadFile(url, path, i.GetImageFileName(duplicates));
-                    _archivedImages.Add(new ArchivedImage(i, null));
+                    if (DownloadFile(url, path, i.GetImageFileName(duplicates)))
+                        _archivedImages.Add(i.GetImageName(), new ArchivedImage(i, null));
                 }
             }
 
             int index = new Random().Next(images.Count());
             SetWallpaper(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
+        }
+
+        /// <summary>
+        /// Gets images list from bing servers
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="count"></param>
+        /// <param name="market"></param>
+        /// <returns></returns>
+        private static List<BingImage> GetImagesList(int index, int count, string market)
+        {
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(GetUrl(0, 8, market));
+                using (HttpWebResponse res = (HttpWebResponse)req.GetResponse())
+                {
+                    string json = new StreamReader(res.GetResponseStream()).ReadToEnd();
+                    Bing b = JsonConvert.DeserializeObject<Bing>(json);
+                    b.images.ForEach(x => x.market = market);
+                    return b.images;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error geting images list. Index={index}, count={count}, market={market}");
+            }
+            return new List<BingImage>();
         }
 
         const int SPI_SETDESKWALLPAPER = 20;
@@ -132,8 +146,9 @@ namespace BingImageDownloader
 
 
 
-        static void DownloadFile(string url, string path, string name)
+        static bool DownloadFile(string url, string path, string name)
         {
+            bool ret = false;
             string filePath = Path.Combine(path, CleanFileName(name?.Trim()));
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
@@ -141,19 +156,21 @@ namespace BingImageDownloader
             {
                 if (!File.Exists(filePath))
                 {
-                    _logger.Info("Donwloading {0}", url);
+                    _logger.Info($"Downloading {url}");
                     WebClient wb = new WebClient();
                     wb.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.33 Safari/537.36");
                     wb.DownloadFile(url, filePath);
+                    ret = true;
                 }
                 else
-                    _logger.Info("Skipped {0}", url);
+                    _logger.Info($"Skipped {url}");
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Wystąpił błąd w trakcie pobierania pliku {0}", filePath);
                 File.Delete(filePath);
             }
+            return ret;
         }
 
         static string CleanFileName(string name)
@@ -181,7 +198,7 @@ namespace BingImageDownloader
             using (StreamReader file = File.OpenText(_jsonFilePath))
             {
                 JsonSerializer serializer = new JsonSerializer();
-                _archivedImages = (List<ArchivedImage>)serializer.Deserialize(file, typeof(List<ArchivedImage>));
+                _archivedImages = (Dictionary<string, ArchivedImage>)serializer.Deserialize(file, typeof(Dictionary<string, ArchivedImage>));
             }
         }
 
@@ -210,7 +227,7 @@ namespace BingImageDownloader
             "ZH-CN" };
 
         private static Logger _logger = LogManager.GetCurrentClassLogger();
-        private static List<ArchivedImage> _archivedImages = new List<ArchivedImage>();
+        private static Dictionary<string, ArchivedImage> _archivedImages = new Dictionary<string, ArchivedImage>();
         private static string _jsonFilePath;
 
         public class Bing
