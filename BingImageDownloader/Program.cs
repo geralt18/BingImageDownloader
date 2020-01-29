@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -259,22 +260,38 @@ namespace BingImageDownloader
 
             public string GetImageName()
             {
-                //EnglemannSpruceForest_ROW12845047121_1920x1080.jpg
-                string name = Path.GetFileName(this.url);
+                // Tak było po staremu
+                // EnglemannSpruceForest_ROW12845047121_1920x1080.jpg
+                //string name = Path.GetFileName(this.url);
+                
+                // Teraz jest tak
+                // /th?id=OHR.AerialKluaneNP_JA-JP2035742573_1920x1080.jpg&rf=LaDigue_1920x1080.jpg&pid=hp
+                Uri u = new Uri(_bingUrl + this.url);
+                var q = HttpUtility.ParseQueryString(u.Query);
+                string name = q["id"];
+
                 return name.Substring(0, name.IndexOf('_'));
-            }
+            }  
 
             public string GetImageFileName(bool dupl)
             {
-                //EnglemannSpruceForest_ROW12845047121_1920x1080.jpg
-                string name = Path.GetFileName(this.url);
+                // Tak było po staremu
+                // EnglemannSpruceForest_ROW12845047121_1920x1080.jpg
+                // string name = Path.GetFileName(this.url);
+
+                // Teraz jest tak
+                // /th?id=OHR.AerialKluaneNP_JA-JP2035742573_1920x1080.jpg&rf=LaDigue_1920x1080.jpg&pid=hp
+                Uri u = new Uri(_bingUrl + this.url);
+                var q = HttpUtility.ParseQueryString(u.Query);
+                string name = q["id"];
+
                 int index = name.IndexOf('_');
                 string imageName = name.Substring(0, index);
                 string rest = name.Substring(index + 1);
                 if (dupl)
                     return string.Format("{0}_{1}{2}", this.startdate, imageName, rest);
                 else
-                    return string.Format("{0}_{1}_{2}{3}", this.startdate, imageName, this.market, Path.GetExtension(this.url));
+                    return string.Format("{0}_{1}_{2}{3}", this.startdate, imageName, this.market, Path.GetExtension(name));
             }
         }
 
