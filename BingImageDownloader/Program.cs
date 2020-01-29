@@ -85,7 +85,7 @@ namespace BingImageDownloader
         {
             try
             {
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(GetUrl(0, 8, market));
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(GetUrl(index, count, market));
                 using (HttpWebResponse res = (HttpWebResponse)req.GetResponse())
                 {
                     string json = new StreamReader(res.GetResponseStream()).ReadToEnd();
