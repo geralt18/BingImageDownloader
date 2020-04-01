@@ -46,6 +46,7 @@ namespace BingImageDownloader
             bool otherMarket = true;
             bool duplicates = false;
             List<BingImage> images = new List<BingImage>();
+            List<BingImage> downloadedImages = new List<BingImage>();
             String path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Bing");
 
             foreach (var market in _markets)
@@ -66,12 +67,16 @@ namespace BingImageDownloader
                 if (!_archivedImages.ContainsKey(i.GetImageName()))
                 {
                     if (DownloadFile(url, path, i.GetImageFileName(duplicates)))
+                    {
                         _archivedImages.Add(i.GetImageName(), new ArchivedImage(i, null));
+                        downloadedImages.Add(i);
+                    }
                 }
             }
 
-            int index = new Random().Next(images.Count());
-            SetWallpaper(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
+            int index = new Random().Next(downloadedImages.Count()); 
+            if (downloadedImages.Count() > 0)
+                SetWallpaper(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
         }
 
         /// <summary>
