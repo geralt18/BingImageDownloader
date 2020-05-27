@@ -77,6 +77,10 @@ namespace BingImageDownloader
             int index = new Random().Next(downloadedImages.Count()); 
             if (downloadedImages.Count() > 0)
                 SetWallpaper(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+            else {
+               index = new Random().Next(images.Count()); 
+               SetWallpaper(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
+            }
         }
 
         /// <summary>
