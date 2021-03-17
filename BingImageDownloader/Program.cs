@@ -74,12 +74,18 @@ namespace BingImageDownloader
                 }
             }
 
-            int index = new Random().Next(downloadedImages.Count()); 
-            if (downloadedImages.Count() > 0)
-                SetWallpaper(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+            
+            if (downloadedImages.Count() > 0) {
+               int index = new Random().Next(downloadedImages.Count());
+               SetWallpaper(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+               index = new Random().Next(downloadedImages.Count());
+               SetLockScreen(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+            }
             else {
-               index = new Random().Next(images.Count()); 
+               int index = new Random().Next(images.Count()); 
                SetWallpaper(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
+               index = new Random().Next(images.Count());
+               SetLockScreen(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
             }
         }
 
@@ -148,13 +154,22 @@ namespace BingImageDownloader
 
             SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, tempPath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
         }
+        public static void SetLockScreen(string file) {
+            if(!File.Exists(file))
+               return;
+
+            using(RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", true)) {
+               key.SetValue(@"LockScreenImagePath", file);
+               key.SetValue(@"LockScreenImageUrl", file);
+               key.SetValue(@"LockScreenImageStatus", 1);
+               key.Close();
+            }
+        }
 
         static object GetSize()
         {
             return "1920x1080";
         }
-
-
 
         static bool DownloadFile(string url, string path, string name)
         {
