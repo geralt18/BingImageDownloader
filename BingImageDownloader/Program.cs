@@ -77,15 +77,15 @@ namespace BingImageDownloader
             
             if (downloadedImages.Count() > 0) {
                int index = new Random().Next(downloadedImages.Count());
-               SetWallpaper(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+               SetWallpaper(Path.Combine(path, downloadedImages[index].GetImageFileName(duplicates)));
                index = new Random().Next(downloadedImages.Count());
-               SetLockScreen(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
+               SetLockScreen(Path.Combine(path, downloadedImages[index].GetImageFileName(duplicates)));
             }
             else {
                int index = new Random().Next(_archivedImages.Count()); 
-               SetWallpaper(Path.Combine(path, CleanFileName(_archivedImages.ElementAt(index).Value.FileName)));
+               SetWallpaper(Path.Combine(path, _archivedImages.ElementAt(index).Value.FileName));
                index = new Random().Next(_archivedImages.Count());
-               SetLockScreen(Path.Combine(path, CleanFileName(_archivedImages.ElementAt(index).Value.FileName)));
+               SetLockScreen(Path.Combine(path, _archivedImages.ElementAt(index).Value.FileName));
             }
         }
 
@@ -178,7 +178,7 @@ namespace BingImageDownloader
         static bool DownloadFile(string url, string path, string name)
         {
             bool ret = false;
-            string filePath = Path.Combine(path, CleanFileName(name?.Trim()));
+            string filePath = Path.Combine(path, name);
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
             try
@@ -303,6 +303,7 @@ namespace BingImageDownloader
 
             public string GetImageFileName(bool dupl)
             {
+                string ret = string.Empty;
                 // Tak było po staremu
                 // EnglemannSpruceForest_ROW12845047121_1920x1080.jpg
                 // string name = Path.GetFileName(this.url);
@@ -317,9 +318,11 @@ namespace BingImageDownloader
                 string imageName = name.Substring(0, index);
                 string rest = name.Substring(index + 1);
                 if (dupl)
-                    return string.Format("{0}_{1}{2}", this.startdate, imageName, rest);
+                    ret = string.Format("{0}_{1}{2}", this.startdate, imageName, rest);
                 else
-                    return string.Format("{0}_{1}_{2}{3}", this.startdate, imageName, this.market, Path.GetExtension(name));
+                    ret = string.Format("{0}_{1}_{2}{3}", this.startdate, imageName, this.market, Path.GetExtension(name));
+
+                return CleanFileName(ret.Trim());
             }
         }
 
