@@ -155,6 +155,7 @@ namespace BingImageDownloader
             //}
 
             SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, tempPath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+            _logger.Info($"Set wallpaper image to {file}");
         }
         public static void SetLockScreen(string file) {
             if(!File.Exists(file)) {
@@ -167,6 +168,7 @@ namespace BingImageDownloader
                key.SetValue(@"LockScreenImageUrl", file);
                key.SetValue(@"LockScreenImageStatus", 1);
                key.Close();
+               _logger.Info($"Set lockscreen image to {file}");
             }
         }
 
