@@ -68,7 +68,7 @@ namespace BingImageDownloader
                 {
                     if (DownloadFile(url, path, i.GetImageFileName(duplicates)))
                     {
-                        _archivedImages.Add(i.GetImageName(), new ArchivedImage(i, null));
+                        _archivedImages.Add(i.GetImageName(), new ArchivedImage(i));
                         downloadedImages.Add(i);
                     }
                 }
@@ -82,10 +82,10 @@ namespace BingImageDownloader
                SetLockScreen(Path.Combine(path, CleanFileName(downloadedImages[index].GetImageFileName(duplicates))));
             }
             else {
-               int index = new Random().Next(images.Count()); 
-               SetWallpaper(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
-               index = new Random().Next(images.Count());
-               SetLockScreen(Path.Combine(path, CleanFileName(images[index].GetImageFileName(duplicates))));
+               int index = new Random().Next(_archivedImages.Count()); 
+               SetWallpaper(Path.Combine(path, CleanFileName(_archivedImages.ElementAt(index).Value.FileName)));
+               index = new Random().Next(_archivedImages.Count());
+               SetLockScreen(Path.Combine(path, CleanFileName(_archivedImages.ElementAt(index).Value.FileName)));
             }
         }
 
@@ -126,8 +126,10 @@ namespace BingImageDownloader
 
         public static void SetWallpaper(string file)
         {
-            if (!File.Exists(file))
-                return;
+            if(!File.Exists(file)) {
+               _logger.Error(new FileNotFoundException("Wallpaper image doesn't exist", file), $"Wallpaper doesn't exist. Path={file}");
+               return;
+            }
 
             System.Drawing.Image img = System.Drawing.Image.FromFile(file);
             string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
@@ -155,8 +157,10 @@ namespace BingImageDownloader
             SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, tempPath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
         }
         public static void SetLockScreen(string file) {
-            if(!File.Exists(file))
+            if(!File.Exists(file)) {
+               _logger.Error(new FileNotFoundException("Lockscreen image doesn't exist", file), $"Lockscreen doesn't exist. Path={file}");
                return;
+            }
 
             using(RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", true)) {
                key.SetValue(@"LockScreenImagePath", file);
@@ -326,19 +330,19 @@ namespace BingImageDownloader
             public string Description { get; set; }
             public string Date { get; set; }
             public string UrlBase { get; set; }
+            public string FileName {get; set;}
 
             public ArchivedImage() { }
 
-            public ArchivedImage(BingImage b, string market)
+            public ArchivedImage(BingImage b)
             {
                 Name = b.GetImageName();
-                Market = market;
+                Market = b.market;
                 Description = b.copyright;
                 Date = b.startdate;
                 UrlBase = b.urlbase;
+                FileName = b.GetImageFileName(false);
             }
-        }
-
-
+      }
     }
 }
