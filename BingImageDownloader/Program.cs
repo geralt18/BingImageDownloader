@@ -149,28 +149,23 @@ namespace BingImageDownloader
             string tempPath = Path.Combine(Path.GetTempPath(), "wallpaper.bmp");
             img.Save(tempPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
-            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true);
-            //if (style == Style.Stretched)
-            //{
-            //   key.SetValue(@"WallpaperStyle", 2.ToString());
-            //   key.SetValue(@"TileWallpaper", 0.ToString());
-            //}
-
-            //if (style == Style.Centered)
-            //{
-            key.SetValue(@"WallpaperStyle", 1.ToString());
-            key.SetValue(@"TileWallpaper", 0.ToString());
-            //}
-
-            //if (style == Style.Tiled)
-            //{
-            //   key.SetValue(@"WallpaperStyle", 1.ToString());
-            //   key.SetValue(@"TileWallpaper", 1.ToString());
-            //}
+            using(RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true)) {
+               key.SetValue(@"WallpaperStyle", 1.ToString()); //Centered
+               key.SetValue(@"TileWallpaper", 0.ToString());
+            }
 
             SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, tempPath, SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE);
+
+            using(RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP", true)) {
+               key.SetValue(@"DesktopImagePath", file);
+               key.SetValue(@"DesktopImageUrl", file);
+               key.SetValue(@"DesktopImageStatus", 1);
+               key.Close();
+            }
+
             _logger.Info($"Set wallpaper image to {file}");
         }
+
         public static void SetLockScreen(string file) {
             if(!File.Exists(file)) {
                _logger.Error(new FileNotFoundException("Lockscreen image doesn't exist", file), $"Lockscreen doesn't exist. Path={file}");
