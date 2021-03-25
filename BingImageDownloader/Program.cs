@@ -33,11 +33,25 @@ namespace BingImageDownloader
             //Application.Run(new Form1());
             LoadArchivedImages();
             GetJson();
+            //RepairArchivedImages();
             SaveArchivedImages();
             _logger.Info("Stop");
         }
 
-        private const string _bingUrl = @"http://www.bing.com";
+      private static void RepairArchivedImages() {
+         foreach(var img in _archivedImages) {
+            if (string.IsNullOrWhiteSpace(img.Value.Market)) {
+               int index = img.Value.UrlBase.IndexOf('_');
+               img.Value.Market = img.Value.UrlBase.Substring(index + 1, 5);
+            }
+
+            if(string.IsNullOrWhiteSpace(img.Value.FileName)) 
+               img.Value.FileName = CleanFileName(string.Format("{0}_{1}_{2}{3}", img.Value.Date, img.Value.Name, img.Value.Market, ".jpg"));
+            
+         }
+      }
+
+      private const string _bingUrl = @"http://www.bing.com";
         private const string _jsonFileName = "images.json";
 
         static void GetJson()
